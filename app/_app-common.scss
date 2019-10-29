@@ -1,0 +1,70 @@
+// Place any CSS rules you want to apply on both iOS and Android here.
+// This is where the vast majority of your CSS code goes.
+// Font icon class
+.fa {
+   font-family: "FontAwesome";
+}
+
+.t-36 {
+   font-size: 36;
+}
+
+// Common page class
+.page-content {
+   .page-placeholder {
+       color: $page-icon-color;
+       font-size: $page-content-placeholder-font-size;
+       vertical-align: center;
+       horizontal-align: center;
+   }
+
+   .page-icon {
+       font-size: 72;
+       vertical-align: top;
+       horizontal-align: center;
+       color: $page-icon-color;
+       margin-top: 20%;
+   }
+}
+
+//Action bar
+ActionBar .action-bar-title {
+   horizontal-align: left;
+}
+
+// TabStrip {
+//    // background-color: #2C163D;
+// }
+
+// TabStringItem Button {
+//    border-color: rgba(255, 0, 0, 0.0);
+//    border-width: 1;
+//    // margin: 20;
+//    // padding: 10;
+//    // background-color: #2C163D;
+//    // color: white;
+//    font-size: 24;
+//    border-radius: 10;
+// }
+
+// TabStringItem:active Button {
+//    border-color: rgba(255, 0, 0, 0.0);
+//    border-width: 1;
+//    background-color: #5326BF;
+// }
+
+TabStripItem Label {
+   color: $blue-dark;
+}
+
+TabStripItem:active Label {
+   color: $item-active-color;
+}
+
+TabStripItem Image {
+   color: $blue-dark;
+}
+
+TabStripItem:active Image {
+   color: $item-active-color;
+}
