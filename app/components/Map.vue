@@ -1,3 +1,4 @@
+// 10.0.2.2
 <template>
     <Page class="page" xmlns:maps="nativescript-google-maps-sdk">
         <ActionBar class="action-bar">
@@ -5,7 +6,8 @@
         </ActionBar>
 
         <GridLayout class="page-content">
-            <!-- <Mapbox
+            <!-- <MapView /> -->
+            <Mapbox
                 accessToken="pk.eyJ1IjoiY2xpY2tuIiwiYSI6ImNqdzhyZWZhazF5ZWMzenMwM200d2YzYnEifQ.AJs2nD_1XKA288fboJuFSw"
                 mapStyle="light"
                 hideCompass="true"
@@ -16,17 +18,34 @@
                 disableScroll="false"
                 disableTilt="false"
                 @mapReady="onMapReady($event)"
+                @locationPermissionGranted="onMapReady($event)"
                 ref="map"
             >
-            </Mapbox> -->
-            <!-- <maps:mapView
-            /> -->
+            </Mapbox>
+            <GridLayout rows="auto" verticalAlignment="bottom" horizontalAlignment="center" marginBottom="10" v-if="showEventsPreview" >
+            <ScrollView orientation="horizontal" scrollBarIndicatorVisible="false" ref="scrollView">
+                <WrapLayout orientation="horizontal">
+                    <template v-for="event in events">
+                        <GridLayout :v-bind:key="event.id" class="eventCard" columns="275, 100" rows="40, auto, auto" marginBottom="15" marginLeft="8" marginRight="8" backgroundColor="white" >
+                            <Label class="eventTitle" padding="5" :text="event.title" row="0" colSpan="2" />
+                            <Label padding="5" :text="durationUntilDate(event.datetime_start)" row="1" colSpan="2" />
+                            <Label padding="5" :text="event.description" row="2" colSpan="2" />
+                            <!-- <GridLayout row="3" col="1" > -->
+                                <Button row="3" col="1" text="Join"></Button>
+                            <!-- </GridLayout> -->
+                        </GridLayout>
+                    </template>
+                </WrapLayout>
+            </ScrollView>        
+            </GridLayout>
         </GridLayout>
     </Page>
 </template>
 
 <script>
 import axios from 'axios'
+import Event from '../data/event'
+var moment = require('moment');
 const geolocation = require("nativescript-geolocation");
 const { Accuracy } = require("tns-core-modules/ui/enums");
 var mapbox = require("nativescript-mapbox");
@@ -39,12 +58,26 @@ export default {
                 longitude: null
             },
             mapRadius: null,
-            markers: [],
-            markerIDs: []
+            events: [],
+            showEventsPreview: false
         };
     },
     methods: {
+        durationUntilDate(datetimme_start) {
+            return 'In ' + moment.duration(Date.parse(datetimme_start) - Date.now(), 'milliseconds').humanize()
+        },
+        async selectEvent(eventId) {
+            // let event = await axios.get('http://10.104.1.122:3000/events/' + eventId)
+            // this.selectedEvent = new Event(event.data)
+            const selectedEventIndex = this.events.map(e => e.id).indexOf(eventId);
+            this.showEventsPreview = true
+            let scrollOffset = 390 * selectedEventIndex
+            let scrollView = this.$refs.scrollView.nativeView
+            scrollView.scrollToHorizontalOffset(scrollOffset, true)
+        },
         async onMapReady(args) {
+            let self = this
+            let markers = []
             // if no permission was granted previously this will open a user consent screen
             // await this.$refs.map.nativeView.requestFineLocationPermission();
             await this.getLocation();
@@ -55,70 +88,67 @@ export default {
             })
             let viewport = await args.map.getViewport()
             this.mapRadius = this.calculateViewportRadius(viewport)
-            // let nearby_events = await axios.post('http://10.0.2.2:3000/events/search', {
-            //     latitude: this.mapCenter.latitude,
-            //     longitude: this.mapCenter.longitude,
-            //     search_radius: this.mapRadius
-            // })
-            let request = await axios.get('http://10.0.2.2:3000/events')
-            let events = request.data.data
-            for (let key in events) {
-                let event = events[key]
-                let marker = {
-                    id: event._id,
-                    lat: event.location.coordinates[1],
-                    lng: event.location.coordinates[0],
-                    title: event.title,
-                    subtitle: event.description,
-                    onTap: marker => console.log("Marker tapped with title: '" + marker.title + "'"),
-                    onCalloutTap: marker => alert("Marker callout tapped with title: '" + marker.title + "'")
-                }
-                this.markers.push(marker)
-                this.markerIDs.push(marker.id)
-            }
-            await args.map.addMarkers(this.markers)
-            // this.setOnScrollListener();
-        },
-        // async setOnScrollListener() {
-        //     let self = this
-        //     this.$refs.map.nativeView.setOnScrollListener((point) => {
-        //         if(self.scrollTimer !== null) {
-        //             clearTimeout(self.scrollTimer);        
-        //         }
-        //         self.scrollTimer = setTimeout(async function() {
-        //             let center = await self.$refs.map.nativeView.getCenter();
-        //             self.mapCenter.latitude = center.lat;
-        //             self.mapCenter.longitude = center.lng;
-        //             self.getNearbyEvents();
-        //         }, 1500);
-        //     });
-        // },
-        async getNearbyEvents() {
-            let new_markers = []
-            let nearby_events = await axios.post('http://10.0.2.2:3000/events/search', {
+            let qs = this.buildQueryString({
+                status: "active",
                 latitude: this.mapCenter.latitude,
                 longitude: this.mapCenter.longitude,
                 search_radius: this.mapRadius
             })
-            // console.log(nearby_events)
-
-            for (let key in nearby_events.data.events) {
-                let event = nearby_events.data.events[key]
-                if (this.markerIDs.includes(event._id) === true) continue;
+            let request = await axios.get('http://10.104.1.122:3000/events?' + qs)
+            for (let key in request.data.events) {
+                let event = new Event(request.data.events[key])
+                let marker = {
+                    id: event.id,
+                    lat: event.latitude,
+                    lng: event.longitude,
+                    onTap: () => this.selectEvent(marker.id)
+                }
+                markers.push(marker)
+                this.events.push(event)
+            }
+            await args.map.addMarkers(markers)
+            this.setOnScrollListener();
+        },
+        async setOnScrollListener() {
+            let self = this
+            this.$refs.map.nativeView.setOnScrollListener((point) => {
+                if(self.scrollTimer !== null) {
+                    clearTimeout(self.scrollTimer);        
+                }
+                self.scrollTimer = setTimeout(async function() {
+                    let center = await self.$refs.map.nativeView.getCenter();
+                    self.mapCenter.latitude = center.lat;
+                    self.mapCenter.longitude = center.lng;
+                    self.getNearbyEvents();
+                }, 1500);
+            });
+        },
+        async getNearbyEvents() {
+            console.log('getting events')
+            let markers = []
+            let qs = this.buildQueryString({
+                status: "active",
+                latitude: this.mapCenter.latitude,
+                longitude: this.mapCenter.longitude,
+                search_radius: this.mapRadius
+            })
+            let request = await axios.get('http://10.104.1.122:3000/events?' + qs)
+            for (let key in request.data.events) {
+                let event = new Event(request.data.events[key])
+                if (this.events.some(e => e.id === event.id)) 
+                    continue;
 
                 let marker = {
-                    id: event._id,
-                    lat: event.location.coordinates[1],
-                    lng: event.location.coordinates[0],
-                    title: event.title,
-                    subtitle: event.description
+                    id: event.id,
+                    lat: event.latitude,
+                    lng: event.longitude,
+                    onTap: () => this.selectEvent(marker.id),
                 }
-                console.log(marker)
-                new_markers.push(marker)
-                this.markers.push(marker)
-                this.markerIDs.push(marker.id)
+                markers.push(marker)
+                this.events.push(event)
             }
-            await this.$refs.map.nativeView.addMarkers(new_markers)
+            await this.$refs.map.nativeView.addMarkers(markers)
+            console.log(events)
         },
         async getLocation() {
             return new Promise(resolve => {
@@ -132,9 +162,7 @@ export default {
                 .then(res => {
                     this.mapCenter.latitude = res.latitude
                     this.mapCenter.longitude = res.longitude
-                    // console.log(res)
                     resolve(res)
-                    // this.speed = res.speed;
                 });
             })
         },
@@ -155,6 +183,17 @@ export default {
         toRadians(degrees) {
             var pi = Math.PI;
             return degrees * (pi/180);
+        },
+        buildQueryString(data) {
+            if (typeof (data) === 'string') return data;
+            
+            var query = [];
+            for (var key in data) {
+                if (data.hasOwnProperty(key)) {
+                    query.push(encodeURIComponent(key) + '=' + encodeURIComponent(data[key]));
+                }
+            }
+            return query.join('&');
         }
     }
 }
@@ -166,5 +205,13 @@ export default {
 // End custom common variables
 
 // Custom styles
+.eventTitle {
+    font-size: 20em;
+    color: black;
+}
+
+.eventCard {
+    border-radius: 8
+}
 
 </style>

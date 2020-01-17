@@ -1,26 +1,31 @@
 {
   "nativescript": {
     "id": "org.nativescript.myappname",
-    "tns-android": {
-      "version": "6.1.2"
-    },
     "tns-ios": {
-      "version": "6.1.0"
+      "version": "6.3.0"
+    },
+    "tns-android": {
+      "version": "6.3.1"
     }
   },
   "description": "NativeScript Application",
   "license": "SEE LICENSE IN <your-license-filename>",
   "repository": "<fill-your-repository-here>",
   "dependencies": {
+    "axios": "^0.19.1",
+    "moment": "^2.24.0",
+    "nativescript-geolocation": "^5.1.0",
+    "nativescript-google-maps-sdk": "^2.9.1",
+    "nativescript-mapbox": "^4.4.1",
     "nativescript-theme-core": "~1.0.6",
     "nativescript-vue": "~2.4.0",
-    "tns-core-modules": "~6.1.0"
+    "tns-core-modules": "^6.3.2"
   },
   "devDependencies": {
     "@babel/core": "~7.1.0",
     "@babel/preset-env": "~7.1.0",
     "babel-loader": "~8.0.0",
-    "nativescript-dev-webpack": "~1.2.0",
+    "nativescript-dev-webpack": "^1.4.1-rc-2020-01-07-130355-02",
     "nativescript-vue-template-compiler": "~2.4.0",
     "node-sass": "^4.7.1",
     "vue-loader": "~15.4.0"
