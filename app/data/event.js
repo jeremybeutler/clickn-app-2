@@ -16,6 +16,7 @@ export default class Event {
         this._latitude = event.location.coordinates[1]
         this._longitude = event.location.coordinates[0]
         this._conversation = event.conversation
+        this._street_address = event.street_address
     }
 
     get id() {
@@ -67,6 +68,10 @@ export default class Event {
         return this._conversation
     }
 
+    get street_address() {
+        return this._street_address
+    }
+
     set id(value) {
         this._id = value
     }
@@ -114,5 +119,9 @@ export default class Event {
     }
     set conversation(value) {
         this._conversation = value
+    }
+
+    set street_address(value) {
+        this._street_address = this.street_address
     }
 };

@@ -2,7 +2,19 @@
 // This is where the vast majority of your CSS code goes.
 // Font icon class
 .fa {
-   font-family: "FontAwesome";
+   font-family: "FontAwesome", "FontAwesome";
+}
+
+.im {
+   font-family: "IcoMoon-Free", "IcoMoon-Free"
+}
+
+.lnr {
+   font-family: "Linearicons-Free", "Linearicons-Free";
+}
+
+.t-14 {
+   font-size: 14;
 }
 
 .t-36 {

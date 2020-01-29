@@ -1,5 +1,3 @@
-
-
 <template>
   <Page class="page">
     <ActionBar class="action-bar">

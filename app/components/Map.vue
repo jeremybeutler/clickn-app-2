@@ -1,4 +1,3 @@
-// 10.0.2.2
 <template>
     <Page class="page" xmlns:maps="nativescript-google-maps-sdk">
         <ActionBar class="action-bar">
@@ -25,13 +24,13 @@
             <GridLayout rows="auto" verticalAlignment="bottom" horizontalAlignment="center" marginBottom="10" v-if="showEventsPreview" >
             <ScrollView orientation="horizontal" scrollBarIndicatorVisible="false" ref="scrollView">
                 <WrapLayout orientation="horizontal">
-                    <template v-for="event in events">
-                        <GridLayout :v-bind:key="event.id" class="eventCard" columns="275, 100" rows="40, auto, auto" marginBottom="15" marginLeft="8" marginRight="8" backgroundColor="white" >
+                    <template v-for="event in events" :v-bind:key="event.id">
+                        <GridLayout class="eventCard" columns="275, 100" rows="40, auto, auto" marginBottom="15" marginLeft="8" marginRight="8" backgroundColor="white" >
                             <Label class="eventTitle" padding="5" :text="event.title" row="0" colSpan="2" />
                             <Label padding="5" :text="durationUntilDate(event.datetime_start)" row="1" colSpan="2" />
                             <Label padding="5" :text="event.description" row="2" colSpan="2" />
                             <!-- <GridLayout row="3" col="1" > -->
-                                <Button row="3" col="1" text="Join"></Button>
+                                <Button row="3" col="1" text="Join" @tap="showEventPreviewModal(event)"></Button>
                             <!-- </GridLayout> -->
                         </GridLayout>
                     </template>
@@ -45,6 +44,7 @@
 <script>
 import axios from 'axios'
 import Event from '../data/event'
+import ViewEventModal from './ViewEventModal'
 var moment = require('moment');
 const geolocation = require("nativescript-geolocation");
 const { Accuracy } = require("tns-core-modules/ui/enums");
@@ -52,6 +52,8 @@ var mapbox = require("nativescript-mapbox");
 export default {
     data: () => {
         return {
+            apiURL: 'http://10.0.2.2:3000',
+            // apiURL: 'http://10.104.1.122:3000',
             scrollTimer: null,
             mapCenter: {
                 latitude: null,
@@ -63,8 +65,13 @@ export default {
         };
     },
     methods: {
-        durationUntilDate(datetimme_start) {
-            return 'In ' + moment.duration(Date.parse(datetimme_start) - Date.now(), 'milliseconds').humanize()
+        showEventPreviewModal(event) {
+            this.$showModal(ViewEventModal, 
+                { fullscreen: true, props: { event: event }}
+            )
+        },
+        durationUntilDate(utcString) {
+            return 'In ' + moment.duration(Date.parse(utcString) - Date.now(), 'milliseconds').humanize()
         },
         async selectEvent(eventId) {
             // let event = await axios.get('http://10.104.1.122:3000/events/' + eventId)
@@ -94,7 +101,7 @@ export default {
                 longitude: this.mapCenter.longitude,
                 search_radius: this.mapRadius
             })
-            let request = await axios.get('http://10.104.1.122:3000/events?' + qs)
+            let request = await axios.get(this.apiURL + '/events?' + qs)
             for (let key in request.data.events) {
                 let event = new Event(request.data.events[key])
                 let marker = {
@@ -132,7 +139,7 @@ export default {
                 longitude: this.mapCenter.longitude,
                 search_radius: this.mapRadius
             })
-            let request = await axios.get('http://10.104.1.122:3000/events?' + qs)
+            let request = await axios.get(this.apiURL + '/events?' + qs)
             for (let key in request.data.events) {
                 let event = new Event(request.data.events[key])
                 if (this.events.some(e => e.id === event.id)) 
